@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบรายงานการไปราชการ - โรงเรียน</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Prompt -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- DataTables -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    
+    <!-- jQuery Validate -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/additional-methods.min.js"></script>
+
+    <!-- Flatpickr -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/th.js"></script>
+
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f1f5f9; /* Slate-100 */
+        }
+        /* Custom styles for DataTables */
+        .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter, .dataTables_wrapper .dataTables_info, .dataTables_wrapper .dataTables_paginate {
+            margin-bottom: 1rem;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.5em 1em;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background-color: #4f46e5; /* Indigo-600 */
+            color: white !important;
+            border-radius: 0.375rem;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25em 0.6em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.375rem;
+        }
+        .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+        }
+        .nav-link-mobile.active {
+            background-color: #eef2ff; /* Indigo-50 */
+            color: #4338ca; /* Indigo-700 */
+        }
+        /* jQuery Validate Error Style */
+        .error {
+            color: #ef4444; /* red-500 */
+            font-size: 0.875rem; /* text-sm */
+            margin-top: 0.25rem;
+        }
+        input.error, textarea.error {
+            --tw-ring-color: #ef4444 !important;
+        }
+        .flatpickr-input {
+            background-color: white !important;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black bg-opacity-50">
+        <div class="flex flex-col items-center">
+            <i class="fas fa-spinner fa-spin text-white text-5xl"></i>
+            <p class="text-white mt-4 text-lg">กำลังประมวลผล...</p>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="login-page" class="flex items-center justify-center min-h-screen bg-slate-100">
+        <div class="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-2xl">
+            <div class="text-center">
+                <img src=" " alt="Logo" class="w-24 h-24 mx-auto mb-4" onerror="this.onerror=null; this.src='';">
+                <h1 class="text-3xl font-bold text-slate-800">ระบบรายงานการไปราชการ</h1>
+                <p class="text-slate-500">โรงเรียน</p>
+            </div>
+            <form id="login-form" class="space-y-6">
+                <div>
+                    <label for="email" class="text-sm font-medium text-slate-700">อีเมล</label>
+                    <input id="email" name="email" type="email" required class="w-full px-4 py-3 mt-1 text-slate-700 bg-slate-100 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="user@waiwai.ac.th">
+                </div>
+                <div>
+                    <label for="password" class="text-sm font-medium text-slate-700">รหัสผ่าน</label>
+                    <input id="password" name="password" type="password" required class="w-full px-4 py-3 mt-1 text-slate-700 bg-slate-100 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="********">
+                </div>
+                 <div>
+                    <label for="role" class="text-sm font-medium text-slate-700">บทบาท</label>
+                    <select id="role" name="role" class="w-full px-4 py-3 mt-1 text-slate-700 bg-slate-100 border-2 border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                        <option value="teacher">ครู</option>
+                        <option value="director">ผู้อำนวยการ</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="submit" class="w-full px-4 py-3 font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fa-solid fa-right-to-bracket mr-2"></i>เข้าสู่ระบบ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="main-app" class="hidden min-h-screen">
+        <div class="flex h-screen bg-slate-100">
+            <!-- Desktop Sidebar -->
+            <div class="hidden md:flex flex-col w-64 bg-gradient-to-b from-indigo-600 to-blue-700 text-indigo-100">
+                <div class="flex items-center justify-center h-20 border-b border-white/20">
+                     <img src="   " alt="Logo" class="w-12 h-12" onerror="this.onerror=null; this.src='  ';">
+                     <span class="ml-3 text-lg font-semibold text-white">Nattawut</span>
+                </div>
+                <div class="flex flex-col flex-grow p-4">
+                    <nav class="flex-grow space-y-2">
+                        <a class="nav-link flex items-center px-4 py-2 rounded-lg hover:bg-white/20 hover:text-white transition-colors" href="#" data-view="dashboard-view">
+                            <i class="fas fa-tachometer-alt fa-fw mr-3"></i>Dashboard
+                        </a>
+                        <a class="nav-link flex items-center px-4 py-2 rounded-lg hover:bg-white/20 hover:text-white transition-colors" href="#" data-view="report-form-view">
+                            <i class="fas fa-file-alt fa-fw mr-3"></i>สร้างรายงานใหม่
+                        </a>
+                        <a class="nav-link flex items-center px-4 py-2 rounded-lg hover:bg-white/20 hover:text-white transition-colors" href="#" data-view="report-list-view">
+                            <i class="fas fa-list-alt fa-fw mr-3"></i>รายการรายงาน
+                        </a>
+                    </nav>
+                     <div class="mt-auto">
+                        <a href="#" class="logout-btn flex items-center px-4 py-2 mt-2 rounded-lg hover:bg-red-500/80 hover:text-white transition-colors">
+                            <i class="fas fa-sign-out-alt fa-fw mr-3"></i>ออกจากระบบ
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main content -->
+            <div class="flex flex-col flex-1 overflow-y-auto">
+                <header class="flex items-center justify-between h-20 px-6 bg-white border-b border-slate-200">
+                    <div class="flex items-center">
+                        <button id="mobile-menu-btn" class="text-slate-500 md:hidden focus:outline-none">
+                            <i class="fas fa-bars fa-lg"></i>
+                        </button>
+                        <div class="ml-4 text-center md:text-left">
+                            <h1 class="text-xl font-semibold text-slate-800">ระบบรายงานการไปราชการ</h1>
+                            <p class="text-sm text-slate-500">โรงเรียน</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center">
+                        <span id="user-info" class="text-right mr-4 hidden sm:block">
+                            <span class="font-semibold text-slate-700" id="user-name-display"></span><br>
+                            <span class="text-sm text-slate-500" id="user-role-display"></span>
+                        </span>
+                        <i class="fas fa-user-circle text-4xl text-slate-400"></i>
+                    </div>
+                </header>
+
+                <main class="p-4 md:p-6 lg:p-8">
+                    <!-- Views will be injected here -->
+                </main>
+
+                <footer class="text-center p-4 bg-white text-slate-500 text-sm mt-auto border-t border-slate-200">
+                    © Copy Right Waiwai Jaidee 2025-4Ever
+                </footer>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar (Overlay) -->
+    <div id="mobile-sidebar" class="fixed inset-0 z-40 flex hidden">
+        <!-- Overlay -->
+        <div id="mobile-sidebar-overlay" class="fixed inset-0 bg-black opacity-50"></div>
+        <!-- Sidebar Content -->
+        <div class="relative flex flex-col w-64 max-w-[80vw] bg-white shadow-lg">
+            <div class="flex items-center justify-center h-20 border-b border-slate-200">
+                 <img src="  " alt="Logo" class="w-12 h-12" onerror="this.onerror=null; this.src='  ';">
+                 <span class="ml-3 text-lg font-semibold text-slate-800">Nattawut</span>
+            </div>
+            <div class="flex flex-col flex-grow p-4">
+                <nav class="flex-grow space-y-2">
+                    <a class="nav-link-mobile flex items-center px-4 py-3 text-slate-700 rounded-lg" href="#" data-view="dashboard-view">
+                        <i class="fas fa-tachometer-alt fa-fw mr-3"></i>Dashboard
+                    </a>
+                    <a class="nav-link-mobile flex items-center px-4 py-3 text-slate-700 rounded-lg" href="#" data-view="report-form-view">
+                        <i class="fas fa-file-alt fa-fw mr-3"></i>สร้างรายงานใหม่
+                    </a>
+                    <a class="nav-link-mobile flex items-center px-4 py-3 text-slate-700 rounded-lg" href="#" data-view="report-list-view">
+                        <i class="fas fa-list-alt fa-fw mr-3"></i>รายการรายงาน
+                    </a>
+                </nav>
+                 <div class="mt-auto">
+                    <a href="#" class="logout-btn flex items-center px-4 py-3 mt-2 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                        <i class="fas fa-sign-out-alt fa-fw mr-3"></i>ออกจากระบบ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Views Templates -->
+    <div id="views-templates" class="hidden">
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="main-view">
+            <!-- Stat Cards -->
+            <div class="grid grid-cols-1 gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Card 1 -->
+                <div class="p-6 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500">รายงานทั้งหมด</p>
+                            <p id="stat-total" class="text-3xl font-bold text-slate-800">0</p>
+                        </div>
+                        <div class="p-4 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                            <i class="fas fa-file-invoice text-2xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="p-6 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500">รอตรวจสอบ</p>
+                            <p id="stat-pending" class="text-3xl font-bold text-slate-800">0</p>
+                        </div>
+                        <div class="p-4 bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-lg">
+                            <i class="fas fa-hourglass-half text-2xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="p-6 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500">รับทราบแล้ว</p>
+                            <p id="stat-approved" class="text-3xl font-bold text-slate-800">0</p>
+                        </div>
+                        <div class="p-4 bg-gradient-to-br from-green-500 to-teal-500 rounded-xl shadow-lg">
+                            <i class="fas fa-check-circle text-2xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="p-6 bg-white rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-slate-500">มีข้อเสนอแนะ</p>
+                            <p id="stat-feedback" class="text-3xl font-bold text-slate-800">0</p>
+                        </div>
+                        <div class="p-4 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg">
+                            <i class="fas fa-comments text-2xl text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-5">
+                <div class="lg:col-span-2 p-6 bg-white rounded-xl shadow-lg">
+                    <h3 class="mb-4 text-lg font-semibold text-slate-700">สรุปสถานะรายงาน</h3>
+                    <div class="relative h-64 md:h-72">
+                        <canvas id="statusPieChart"></canvas>
+                    </div>
+                </div>
+                <div class="lg:col-span-3 p-6 bg-white rounded-xl shadow-lg">
+                    <h3 class="mb-4 text-lg font-semibold text-slate-700">จำนวนรายงานรายเดือน</h3>
+                    <div class="relative h-64 md:h-72">
+                        <canvas id="monthlyBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Reports & Top Submitters -->
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                 <div class="p-6 bg-white rounded-xl shadow-lg">
+                    <h3 class="mb-4 text-lg font-semibold text-slate-700">5 รายงานล่าสุด</h3>
+                    <ul id="latest-reports-list" class="space-y-4"></ul>
+                </div>
+                 <div class="p-6 bg-white rounded-xl shadow-lg">
+                    <h3 class="mb-4 text-lg font-semibold text-slate-700">Top 5 ผู้ส่งรายงาน</h3>
+                    <ul id="top-submitters-list" class="space-y-4"></ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Form View -->
+        <div id="report-form-view" class="main-view">
+            <div class="p-8 bg-white rounded-xl shadow-lg">
+                <div class="border-b border-slate-200 pb-5">
+                    <h2 class="text-base font-semibold leading-7 text-slate-900">สร้างรายงานการไปราชการ</h2>
+                    <p class="mt-1 text-sm leading-6 text-slate-600">กรุณากรอกข้อมูลให้ครบถ้วนตามความเป็นจริง</p>
+                </div>
+                <form id="report-form" novalidate="novalidate" class="mt-10 space-y-10">
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+                        <div class="sm:col-span-6">
+                            <label for="report-title" class="block text-sm font-medium leading-6 text-slate-900">หัวข้อเรื่อง</label>
+                            <div class="mt-2">
+                                <input type="text" name="reportTitle" id="report-title" class="block w-full rounded-md border-0 px-3 py-1.5 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="เช่น ประชุมผู้บริหาร, อบรมเชิงปฏิบัติการ" required>
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="report-datetime" class="block text-sm font-medium leading-6 text-slate-900">วันที่ / เวลา</label>
+                            <div class="mt-2">
+                                <input type="text" name="reportDatetime" id="report-datetime" class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="กรุณาเลือกวันที่..." required>
+                            </div>
+                        </div>
+
+                        <div class="sm:col-span-3">
+                            <label for="report-location" class="block text-sm font-medium leading-6 text-slate-900">สถานที่</label>
+                            <div class="mt-2">
+                                <input type="text" name="reportLocation" id="report-location" class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" placeholder="เช่น สพป.มหาสารคาม เขต 1" required>
+                            </div>
+                        </div>
+
+                        <div class="col-span-full">
+                            <label for="report-objective" class="block text-sm font-medium leading-6 text-slate-900">วัตถุประสงค์</label>
+                            <div class="mt-2">
+                                <textarea name="reportObjective" id="report-objective" rows="3" class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-span-full">
+                            <label for="report-travel" class="block text-sm font-medium leading-6 text-slate-900">รายละเอียดการเดินทาง (ถ้ามี)</label>
+                            <div class="mt-2">
+                                <textarea id="report-travel" rows="3" class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-span-full">
+                            <label for="report-summary" class="block text-sm font-medium leading-6 text-slate-900">สรุปผลการดำเนินงาน</label>
+                            <div class="mt-2">
+                                <textarea name="reportSummary" id="report-summary" rows="4" class="block w-full rounded-md border-0 py-1.5 px-3 text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" required></textarea>
+                            </div>
+                        </div>
+
+                        <div class="col-span-full">
+                            <label for="report-images" class="block text-sm font-medium leading-6 text-slate-900">รูปภาพประกอบ</label>
+                            <div class="mt-2 flex justify-center rounded-lg border border-dashed border-slate-900/25 px-6 py-10">
+                                <div class="text-center">
+                                    <i class="fa-regular fa-image text-4xl text-slate-300"></i>
+                                    <div class="mt-4 flex text-sm leading-6 text-slate-600">
+                                        <label for="report-images" class="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500">
+                                            <span>อัปโหลดไฟล์</span>
+                                            <input id="report-images" name="reportImages" type="file" class="sr-only" multiple accept="image/*">
+                                        </label>
+                                        <p class="pl-1">หรือลากและวาง</p>
+                                    </div>
+                                    <p class="text-xs leading-5 text-slate-600">PNG, JPG, GIF ขนาดไม่เกิน 10MB (สูงสุด 4 รูป)</p>
+                                </div>
+                            </div>
+                            <div id="image-preview-container" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex items-center justify-end gap-x-6">
+                        <button type="button" class="text-sm font-semibold leading-6 text-slate-900">ยกเลิก</button>
+                        <button type="submit" class="rounded-md bg-indigo-600 px-6 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                            <i class="fas fa-paper-plane mr-2"></i>ส่งรายงาน
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Report List View -->
+        <div id="report-list-view" class="main-view">
+            <div class="p-8 bg-white rounded-xl shadow-lg">
+                <h2 class="text-2xl font-bold text-slate-800 mb-6">รายการรายงานการไปราชการ</h2>
+                <table id="reports-table" class="display" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>หัวข้อ</th>
+                            <th>ผู้ส่ง</th>
+                            <th>วันที่ส่ง</th>
+                            <th>สถานะ</th>
+                            <th>การดำเนินการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Detail Modal -->
+    <div id="report-detail-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black bg-opacity-60">
+        <div class="bg-slate-50 rounded-lg shadow-xl w-11/12 md:w-3/4 lg:w-2/3 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-slate-200 flex justify-between items-center sticky top-0 bg-slate-50 z-10">
+                <h3 class="text-xl font-semibold text-slate-800" id="modal-title">รายละเอียดรายงาน</h3>
+                <button id="close-modal-btn" class="text-slate-400 hover:text-slate-800 text-3xl font-bold leading-none">&times;</button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-white p-4 rounded-lg shadow">
+                    <p><strong>ผู้ส่ง:</strong> <span id="modal-submitter" class="text-slate-600"></span></p>
+                    <p><strong>วันที่ส่ง:</strong> <span id="modal-submitted-date" class="text-slate-600"></span></p>
+                    <p><strong>วันที่ไปราชการ:</strong> <span id="modal-datetime" class="text-slate-600"></span></p>
+                    <p><strong>สถานที่:</strong> <span id="modal-location" class="text-slate-600"></span></p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-semibold text-slate-700">วัตถุประสงค์:</h4>
+                    <p class="text-slate-600 bg-white p-3 rounded-lg shadow-inner" id="modal-objective"></p>
+                </div>
+                <div class="space-y-2">
+                    <h4 class="font-semibold text-slate-700">รายละเอียดการเดินทาง:</h4>
+                    <p class="text-slate-600 bg-white p-3 rounded-lg shadow-inner" id="modal-travel"></p>
+                </div>
+                 <div class="space-y-2">
+                    <h4 class="font-semibold text-slate-700">สรุปผลการดำเนินงาน:</h4>
+                    <p class="text-slate-600 bg-white p-3 rounded-lg shadow-inner" id="modal-summary"></p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-slate-700 mb-2">รูปภาพประกอบ:</h4>
+                    <div id="modal-images" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                </div>
+                <hr class="border-slate-200">
+                <!-- Comment Section -->
+                <div class="space-y-4">
+                    <h4 class="font-semibold text-slate-700">ความคิดเห็น / ข้อเสนอแนะ:</h4>
+                    <div id="modal-comments" class="space-y-3 max-h-48 overflow-y-auto p-2 bg-slate-100 rounded-lg">
+                        <!-- Comments will be populated here -->
+                    </div>
+                </div>
+                <!-- Director's Action Panel -->
+                <div id="director-action-panel" class="hidden space-y-4 pt-4 border-t border-slate-200">
+                    <h4 class="font-semibold text-slate-700">สำหรับผู้อำนวยการ:</h4>
+                    <div>
+                        <textarea id="director-comment" rows="3" placeholder="เพิ่มความคิดเห็น..." class="w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <div class="flex items-center justify-between">
+                         <div class="flex items-center">
+                            <input id="approve-checkbox" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="approve-checkbox" class="ml-2 block text-sm text-slate-900">รับทราบแล้ว</label>
+                        </div>
+                        <button id="save-feedback-btn" class="py-2 px-4 border border-transparent shadow-lg text-sm font-medium rounded-lg text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105">
+                            <i class="fas fa-save mr-2"></i>บันทึกความเห็น
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+$(document).ready(function() {
+    // --- GLOBAL VARIABLES ---
+    let currentUser = null;
+    let allReports = [];
+    let allUsers = [];
+    let reportsTable = null;
+    let statusPieChartInstance = null;
+    let monthlyBarChartInstance = null;
+    const mainContentArea = $('main');
+
+    // --- HELPER FUNCTIONS ---
+    function showLoading(show) {
+        if (show) {
+            $('#loading-overlay').removeClass('hidden').addClass('flex');
+        } else {
+            $('#loading-overlay').addClass('hidden').removeClass('flex');
+        }
+    }
+
+    function handleFailure(error) {
+        showLoading(false);
+        Swal.fire({
+            icon: 'error',
+            title: 'เกิดข้อผิดพลาด',
+            text: error.message,
+            customClass: { popup: 'rounded-xl' }
+        });
+    }
+
+    // --- INITIALIZATION ---
+    function checkLoginSession() {
+        const sessionUser = sessionStorage.getItem('loginUser');
+        if(sessionUser) {
+            currentUser = JSON.parse(sessionUser);
+            $('#login-page').hide();
+            $('#main-app').removeClass('hidden');
+            initializeAppUI(currentUser);
+        } else {
+            $('#login-page').show();
+            $('#main-app').addClass('hidden');
+        }
+    }
+
+    function initializeAppUI(user) {
+        $('#user-name-display').text(user.name);
+        $('#user-role-display').text(user.role === 'director' ? 'ผู้อำนวยการ' : 'ครู');
+        
+        if (user.role === 'director') {
+            $('a[data-view="report-form-view"]').hide();
+        } else {
+            $('a[data-view="report-form-view"]').show();
+        }
+        showLoading(true);
+        google.script.run
+            .withSuccessHandler(data => {
+                allReports = data.reports;
+                allUsers = data.users;
+                navigateTo('dashboard-view');
+                showLoading(false);
+            })
+            .withFailureHandler(handleFailure)
+            .getInitialData();
+    }
+
+    // --- LOGIN / LOGOUT ---
+    $('#login-form').on('submit', function(e) {
+        e.preventDefault();
+        showLoading(true);
+        const credentials = {
+            email: $('#email').val(),
+            password: $('#password').val(),
+            role: $('#role').val()
+        };
+
+        google.script.run
+            .withSuccessHandler(response => {
+                showLoading(false);
+                if (response.success) {
+                    sessionStorage.setItem('loginUser', JSON.stringify(response.user));
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'เข้าสู่ระบบสำเร็จ',
+                        showConfirmButton: false,
+                        timer: 1500,
+                        customClass: { popup: 'rounded-xl' }
+                    }).then(() => {
+                        checkLoginSession();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'ผิดพลาด',
+                        text: response.message,
+                        customClass: { popup: 'rounded-xl' }
+                    });
+                }
+            })
+            .withFailureHandler(handleFailure)
+            .loginUser(credentials);
+    });
+
+    $(document).on('click', '.logout-btn', function(e) {
+        e.preventDefault();
+        Swal.fire({
+            title: 'ออกจากระบบ',
+            text: "คุณต้องการออกจากระบบใช่หรือไม่?",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'ใช่, ออกจากระบบ',
+            cancelButtonText: 'ยกเลิก'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                sessionStorage.removeItem('loginUser');
+                currentUser = null;
+                allReports = [];
+                allUsers = [];
+                window.location.reload(); 
+            }
+        });
+    });
+
+    // --- NAVIGATION ---
+    function navigateTo(viewId) {
+        mainContentArea.empty();
+        const viewHtml = $(`#views-templates #${viewId}`).clone();
+        mainContentArea.append(viewHtml);
+
+        $('.nav-link, .nav-link-mobile').removeClass('active');
+        $(`.nav-link[data-view="${viewId}"], .nav-link-mobile[data-view="${viewId}"]`).addClass('active');
+        
+        if (viewId === 'dashboard-view') {
+            renderDashboard(allReports);
+        } else if (viewId === 'report-list-view') {
+            renderReportList(allReports);
+        } else if (viewId === 'report-form-view') {
+            initializeFormValidation();
+        }
+    }
+
+    $('.nav-link, .nav-link-mobile').on('click', function(e) {
+        e.preventDefault();
+        const viewId = $(this).data('view');
+        navigateTo(viewId);
+    });
+    
+    $('#mobile-menu-btn').on('click', () => $('#mobile-sidebar').removeClass('hidden'));
+    $('#mobile-sidebar-overlay').on('click', () => $('#mobile-sidebar').addClass('hidden'));
+
+    // --- DASHBOARD RENDERING ---
+    function renderDashboard(reports) {
+        const total = reports.length;
+        const pending = reports.filter(r => r.status === '⏳ รอตรวจสอบ').length;
+        const approved = reports.filter(r => r.status === '✅ ผอ.รับทราบแล้ว').length;
+        const feedback = reports.filter(r => r.status === '💬 มีข้อเสนอแนะ').length;
+
+        $('#stat-total').text(total);
+        $('#stat-pending').text(pending);
+        $('#stat-approved').text(approved);
+        $('#stat-feedback').text(feedback);
+
+        renderPieChart(pending, approved, feedback);
+        renderBarChart(reports);
+        renderLatestReports(reports);
+        renderTopSubmitters(reports);
+    }
+
+    function renderPieChart(pending, approved, feedback) {
+        const ctx = document.getElementById('statusPieChart')?.getContext('2d');
+        if (!ctx) return;
+        if (statusPieChartInstance) statusPieChartInstance.destroy();
+        statusPieChartInstance = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['รอตรวจสอบ', 'รับทราบแล้ว', 'มีข้อเสนอแนะ'],
+                datasets: [{ data: [pending, approved, feedback], backgroundColor: ['#f59e0b', '#22c55e', '#8b5cf6'], borderColor: '#fff', borderWidth: 4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { family: "'Prompt', sans-serif" }, padding: 20 } } } }
+        });
+    }
+
+    function renderBarChart(reports) {
+        const ctx = document.getElementById('monthlyBarChart')?.getContext('2d');
+        if (!ctx) return;
+        const monthlyData = {};
+        const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+        monthNames.forEach(m => monthlyData[m] = 0);
+        reports.forEach(report => {
+            const month = new Date(report.submittedAt).getMonth();
+            monthlyData[monthNames[month]]++;
+        });
+        if (monthlyBarChartInstance) monthlyBarChartInstance.destroy();
+        monthlyBarChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: Object.keys(monthlyData), datasets: [{ label: 'จำนวนรายงาน', data: Object.values(monthlyData), backgroundColor: 'rgba(59, 130, 246, 0.6)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, borderRadius: 8, }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: "'Prompt', sans-serif" } } }, x: { ticks: { font: { family: "'Prompt', sans-serif" } } } } }
+        });
+    }
+
+    function renderLatestReports(reports) {
+        const latestReports = [...reports].sort((a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)).slice(0, 5);
+        const listEl = $('#latest-reports-list');
+        listEl.empty();
+        if (latestReports.length === 0) {
+            listEl.append('<li class="text-slate-500 text-center py-4">ยังไม่มีรายงาน</li>');
+            return;
+        }
+        latestReports.forEach(report => {
+            const submitter = allUsers.find(u => u.id === report.userId);
+            const statusBadge = getStatusBadge(report.status);
+            listEl.append(`<li class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg"><div><p class="font-semibold text-slate-800">${report.title}</p><p class="text-sm text-slate-500">โดย: ${submitter ? submitter.name : 'ไม่พบผู้ใช้'}</p></div>${statusBadge}</li>`);
+        });
+    }
+
+    function renderTopSubmitters(reports) {
+        const submitterCounts = reports.reduce((acc, report) => {
+            acc[report.userId] = (acc[report.userId] || 0) + 1;
+            return acc;
+        }, {});
+        const sortedSubmitters = Object.entries(submitterCounts).sort(([, a], [, b]) => b - a).slice(0, 5);
+        const listEl = $('#top-submitters-list');
+        listEl.empty();
+        if (sortedSubmitters.length === 0) {
+            listEl.append('<li class="text-slate-500 text-center py-4">ยังไม่มีผู้ส่งรายงาน</li>');
+            return;
+        }
+        sortedSubmitters.forEach(([userId, count]) => {
+            const user = allUsers.find(u => u.id == userId);
+            listEl.append(`<li class="flex items-center justify-between p-3 hover:bg-slate-50 rounded-lg"><p class="font-medium text-slate-800">${user ? user.name : 'ไม่พบผู้ใช้'}</p><p class="text-slate-600 font-bold">${count} รายงาน</p></li>`);
+        });
+    }
+
+    // --- REPORT FORM ---
+    let base64Images = [];
+    mainContentArea.on('change', '#report-images', function(e) {
+        const files = Array.from(e.target.files).slice(0, 4);
+        base64Images = [];
+        $('#image-preview-container').empty();
+        
+        if (files.length === 0) return;
+
+        let filesProcessed = 0;
+        showLoading(true);
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64String = event.target.result;
+                base64Images.push({
+                    base64: base64String.split(',')[1], // remove prefix
+                    type: file.type,
+                    name: file.name
+                });
+                const imgElement = `<div class="relative"><img src="${base64String}" class="w-full h-32 object-cover rounded-lg shadow-md"></div>`;
+                $('#image-preview-container').append(imgElement);
+                
+                filesProcessed++;
+                if (filesProcessed === files.length) {
+                    showLoading(false);
+                }
+            }
+            reader.onerror = () => {
+                handleFailure({message: 'ไม่สามารถอ่านไฟล์รูปภาพได้'});
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    function initializeFormValidation() {
+        // Initialize Flatpickr
+        flatpickr("#report-datetime", {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            locale: "th"
+        });
+
+        $('#report-form').validate({
+            rules: {
+                reportTitle: { required: true },
+                reportDatetime: { required: true },
+                reportLocation: { required: true },
+                reportObjective: { required: true },
+                reportSummary: { required: true }
+            },
+            messages: {
+                reportTitle: { required: "กรุณากรอกหัวข้อเรื่อง" },
+                reportDatetime: { required: "กรุณาเลือกวันที่และเวลา" },
+                reportLocation: { required: "กรุณากรอกสถานที่" },
+                reportObjective: { required: "กรุณากรอกวัตถุประสงค์" },
+                reportSummary: { required: "กรุณากรอกสรุปผลการดำเนินงาน" }
+            },
+            errorElement: 'p',
+            errorPlacement: function (error, element) {
+                error.addClass('mt-2 text-sm text-red-600');
+                error.insertAfter(element.closest('.mt-2'));
+            },
+            submitHandler: function(form) {
+                showLoading(true);
+                const reportData = {
+                    userId: currentUser.id,
+                    title: $('#report-title').val(),
+                    objective: $('#report-objective').val(),
+                    datetime: $('#report-datetime').val(),
+                    location: $('#report-location').val(),
+                    travel: $('#report-travel').val(),
+                    summary: $('#report-summary').val(),
+                    images: base64Images
+                };
+
+                google.script.run
+                    .withSuccessHandler(response => {
+                        showLoading(false);
+                        if(response.success) {
+                            allReports.push(response.newReport);
+                            Swal.fire({ icon: 'success', title: 'ส่งรายงานสำเร็จ', showConfirmButton: false, timer: 2000 })
+                            .then(() => {
+                                base64Images = [];
+                                navigateTo('report-list-view');
+                            });
+                        } else {
+                            handleFailure({message: response.message});
+                        }
+                    })
+                    .withFailureHandler(handleFailure)
+                    .submitReport(reportData);
+            }
+        });
+    }
+
+    // --- REPORT LIST ---
+    function getStatusBadge(status) {
+        let colorClass = '';
+        if (status === '✅ ผอ.รับทราบแล้ว') colorClass = 'bg-green-100 text-green-800';
+        else if (status === '💬 มีข้อเสนอแนะ') colorClass = 'bg-purple-100 text-purple-800';
+        else colorClass = 'bg-amber-100 text-amber-800';
+        return `<span class="status-badge ${colorClass}">${status}</span>`;
+    }
+
+    function renderReportList(reports) {
+        if (reportsTable) reportsTable.destroy();
+        const tableBody = $('#reports-table tbody');
+        tableBody.empty();
+        reports.forEach(report => {
+            const submitter = allUsers.find(u => u.id === report.userId);
+            const submittedDate = new Date(report.submittedAt).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+            tableBody.append(`<tr><td class="text-slate-700 font-semibold">${report.title}</td><td class="text-slate-600">${submitter ? submitter.name : 'N/A'}</td><td class="text-slate-500">${submittedDate}</td><td>${getStatusBadge(report.status)}</td><td><button class="view-details-btn bg-slate-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-slate-700 transition-colors" data-id="${report.id}"><i class="fas fa-eye mr-1"></i>ดูรายละเอียด</button></td></tr>`);
+        });
+        reportsTable = $('#reports-table').DataTable({ "language": { "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/th.json" }, "order": [[ 2, "desc" ]], "destroy": true });
+    }
+
+    // --- MODAL LOGIC ---
+    $(document).on('click', '.view-details-btn', function() {
+        const reportId = $(this).data('id');
+        const report = allReports.find(r => r.id == reportId);
+        if (!report) return;
+
+        $('#modal-title').text(report.title);
+        const submitter = allUsers.find(u => u.id === report.userId);
+        $('#modal-submitter').text(submitter ? submitter.name : 'N/A');
+        const submittedDate = new Date(report.submittedAt).toLocaleString('th-TH', { dateStyle: 'long', timeStyle: 'short'});
+        $('#modal-submitted-date').text(submittedDate);
+        const eventDate = new Date(report.datetime).toLocaleString('th-TH', { dateStyle: 'long', timeStyle: 'short'});
+        $('#modal-datetime').text(eventDate);
+        $('#modal-location').text(report.location);
+        $('#modal-objective').text(report.objective);
+        $('#modal-travel').text(report.travel || '-');
+        $('#modal-summary').text(report.summary);
+
+        const imagesContainer = $('#modal-images');
+        imagesContainer.empty();
+        if (report.images && report.images.length > 0) {
+            report.images.forEach(img => {
+                imagesContainer.append(`<a href="${img.url}" target="_blank"><img src="${img.url}" class="w-full h-32 object-cover rounded-lg shadow-md cursor-pointer hover:opacity-80 transition-opacity"></a>`);
+            });
+        } else {
+            imagesContainer.html('<p class="text-slate-500 col-span-4">ไม่มีรูปภาพแนบ</p>');
+        }
+
+        const commentsContainer = $('#modal-comments');
+        commentsContainer.empty();
+        if (report.comments && report.comments.length > 0) {
+            report.comments.forEach(comment => {
+                const commentDate = new Date(comment.timestamp).toLocaleString('th-TH');
+                const isCurrentUserComment = comment.userId === currentUser.id;
+                commentsContainer.append(`<div class="p-3 rounded-lg ${isCurrentUserComment ? 'bg-blue-100' : 'bg-white'}"><p class="font-semibold text-sm ${isCurrentUserComment ? 'text-blue-800' : 'text-slate-800'}">${comment.name}</p><p class="text-slate-700">${comment.text}</p><p class="text-xs text-slate-500 text-right mt-1">${commentDate}</p></div>`);
+            });
+        } else {
+            commentsContainer.html('<p class="text-slate-500 text-center p-4">ยังไม่มีความคิดเห็น</p>');
+        }
+
+        const directorPanel = $('#director-action-panel');
+        if (currentUser.role === 'director') {
+            directorPanel.removeClass('hidden').data('report-id', report.id);
+            $('#director-comment').val('');
+            $('#approve-checkbox').prop('checked', report.status === '✅ ผอ.รับทราบแล้ว');
+        } else {
+            directorPanel.addClass('hidden');
+        }
+        $('#report-detail-modal').removeClass('hidden').addClass('flex');
+    });
+
+    $('#close-modal-btn').on('click', () => $('#report-detail-modal').addClass('hidden').removeClass('flex'));
+
+    $('#save-feedback-btn').on('click', function() {
+        showLoading(true);
+        const feedbackData = {
+            reportId: $('#director-action-panel').data('report-id'),
+            commentText: $('#director-comment').val().trim(),
+            isApproved: $('#approve-checkbox').is(':checked')
+        };
+
+        google.script.run
+            .withSuccessHandler(updatedReport => {
+                showLoading(false);
+                const reportIndex = allReports.findIndex(r => r.id == updatedReport.id);
+                if(reportIndex > -1) {
+                    allReports[reportIndex] = updatedReport;
+                }
+                Swal.fire({title:'บันทึกสำเร็จ', icon:'success', timer: 1500, showConfirmButton: false});
+                $('#report-detail-modal').addClass('hidden').removeClass('flex');
+                const currentViewId = mainContentArea.children().first().attr('id');
+                navigateTo(currentViewId);
+            })
+            .withFailureHandler(handleFailure)
+            .saveDirectorFeedback(feedbackData);
+    });
+
+    // --- INITIAL LOAD ---
+    checkLoginSession();
+});
+</script>
+
+</body>
+</html>
